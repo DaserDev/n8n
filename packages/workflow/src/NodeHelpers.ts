@@ -361,8 +361,13 @@ export function convertNodeToAiTool<
 	}
 
 	if (isFullDescription(item.description)) {
+		const isVectorStore = item.description.group.includes('vector-store');
+
 		item.description.name += 'Tool';
-		item.description.inputs = [];
+		if (!isVectorStore) {
+			item.description.inputs = [];
+		}
+
 		item.description.outputs = [NodeConnectionType.AiTool];
 		item.description.displayName += ' Tool';
 		delete item.description.usableAsTool;
@@ -391,6 +396,18 @@ export function convertNodeToAiTool<
 				default: 'auto',
 			};
 
+			if (isVectorStore) {
+				const metadataProp: INodeProperties = {
+					displayName: 'Include metadata',
+					name: 'includeDocumentMetadata',
+					type: 'boolean',
+					default: false,
+					description: 'Whether or not to include document metadata',
+				};
+
+				item.description.properties.unshift(metadataProp);
+			}
+
 			const descProp: INodeProperties = {
 				displayName: 'Description',
 				name: 'toolDescription',
@@ -412,6 +429,21 @@ export function convertNodeToAiTool<
 			};
 
 			item.description.properties.unshift(descProp);
+
+			if (isVectorStore) {
+				const nameProp: INodeProperties = {
+					displayName: 'Name',
+					name: 'toolName',
+					type: 'string',
+					default: '',
+					required: true,
+					description: 'Name of the vector store',
+					placeholder: 'e.g. company_knowledge_base',
+					validateType: 'string-alphanumeric',
+				};
+
+				item.description.properties.unshift(nameProp);
+			}
 
 			// If node has resource or operation we can determine pre-populate tool description based on it
 			// so we add the descriptionType property as the first property
